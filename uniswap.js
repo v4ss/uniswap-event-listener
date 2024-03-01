@@ -3,6 +3,7 @@ const { ethers } = require("ethers");
 
 const INFURA_MAINNET_URL = process.env.INFURA_MAINNET_URL;
 const INFURA_KEY = process.env.INFURA_KEY;
+const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY;
 const PRIV_KEY = process.env.PRIV_KEY;
 const PUB_KEY = process.env.PUB_KEY;
 const uniswapFactoryV2Address = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
@@ -18,6 +19,58 @@ const provider = new ethers.providers.WebSocketProvider(
 const getBalance = async () => {
   const balance = await provider.getBalance(PUB_KEY);
   console.log(`Your balance is: ${balance.toBigInt()}`);
+};
+
+const getTotalSupply = async (contractAddress) => {
+  const res = await fetch(
+    `https://api.etherscan.io/api?module=stats&action=tokensupply&contractaddress=${contractAddress}&apikey=${ETHERSCAN_KEY}`
+  );
+  if (res.ok) {
+    const data = await res.json();
+    console.log(`Total Supply: ${data.result}`);
+  }
+};
+
+const getContractAbi = async (contractAddress) => {
+  const res = await fetch(
+    `https://api.etherscan.io/api?module=contract&action=getabi&address=${contractAddress}&apikey=${ETHERSCAN_KEY}`
+  );
+  if (res.ok) {
+    const data = await res.json();
+    if (data.status) {
+      console.log("Contract is Verified!");
+    }
+  }
+};
+
+const getTotalLPToken = async (pairAddress) => {
+  const res = await fetch(
+    `https://api.etherscan.io/api?module=stats&action=tokensupply&contractaddress=${pairAddress}&apikey=${ETHERSCAN_KEY}`
+  );
+  if (res.ok) {
+    const data = await res.json();
+    console.log(`Total LP Token : ${parseInt(data.result)}`);
+    return parseInt(data.result);
+  }
+};
+
+const getWETHinPairAddress = async (pairAddress) => {
+  const res = await fetch(
+    `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=${WETHAddress}&address=${pairAddress}&tag=latest&apikey=${ETHERSCAN_KEY}`
+  );
+  if (res.ok) {
+    const data = await res.json();
+    console.log(`Amount of WETH in ${pairAddress} : ${data.result}`);
+    return parseInt(data.result);
+  }
+};
+
+const getWETHLocked = async (pairAddress, lpTokenAmount) => {
+  const amount =
+    (lpTokenAmount * (await getWETHinPairAddress(pairAddress))) /
+    (await getTotalLPToken(pairAddress));
+  console.log(`Amount Locked: ${amount}`);
+  return parseInt(amount);
 };
 
 const wallet = new ethers.Wallet(PRIV_KEY, provider);
@@ -39,9 +92,15 @@ factoryInstance.on("PairCreated", async (token0, token1, pairAddress) => {
   pairAddress: ${pairAddress}
   `);
   if (token0 != WETHAddress) {
-    console.log("token0 is not WETH");
+    await getTotalSupply(token0);
+    await getContractAbi(token0);
+    const totalLPToken0 = await getTotalLPToken(pairAddress);
+    const WETHamountInPairAddress = await getWETHinPairAddress(pairAddress);
   } else if (token1 != WETHAddress) {
-    console.log("token1 is not WETH");
+    await getTotalSupply(token1);
+    await getContractAbi(token1);
+    const totalLPToken1 = await getTotalLPToken(pairAddress);
+    const WETHamountInPairAddress = await getWETHinPairAddress(pairAddress);
   } else {
     console.log("no WETH detected in the pair");
   }
