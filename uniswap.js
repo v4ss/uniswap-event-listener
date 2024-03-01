@@ -17,7 +17,7 @@ const WETHAddress = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 // const provider = new ethers.providers.JsonRpcProvider(
 //   `https://mainnet.infura.io/v3/${INFURA_KEY}`
 // );
-const provider = new ethers.providers.WebSocketProvider(
+const provider = new ethers.WebSocketProvider(
   `wss://mainnet.infura.io/ws/v3/${INFURA_KEY}`
 );
 
@@ -27,7 +27,7 @@ const factoryInstance = new ethers.Contract(
   [
     "event PairCreated(address indexed token0, address indexed token1, address pair, uint)",
   ],
-  wallet
+  provider
 );
 
 // locker contract instance
@@ -37,7 +37,7 @@ const teamFinanceLockInstance = new ethers.Contract(
     "event Deposit(uint256 id, address indexed tokenAddress, address indexed withdrawalAddress, uint256 amount, uint256 unlockTime)",
     "event LockDurationExtended(uint256 id, uint256 unlockTime)",
   ],
-  wallet
+  provider
 );
 
 const unicryptInstance = new ethers.Contract(
@@ -45,7 +45,7 @@ const unicryptInstance = new ethers.Contract(
   [
     "event onDeposit(address lpToken, address user, uint256 amount, uint256 lockDate, uint256 unlockDate)",
   ],
-  wallet
+  provider
 );
 
 const pinkLockV2Instance = new ethers.Contract(
@@ -53,7 +53,7 @@ const pinkLockV2Instance = new ethers.Contract(
   [
     "event LockAdded(uint256 indexed id, address token, address owner, uint256 amount, uint256 unlockDate)",
   ],
-  wallet
+  provider
 );
 
 const getBalance = async () => {
